@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Director/1.2.8/director.min.js"></script>
   <link href="https://unpkg.com/ionicons@4.5.9-1/dist/css/ionicons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
 
   <script id="stationHome" type="text/x-handlebars-template">
     {{#this}}
@@ -75,9 +76,13 @@
   {{#this}}
   <li data-id="{{id}}">
     <span class="status">{{status}}</span>
-    <a class="name" target="new" href="{{URL}}">{{name}}</a>
-    <a class="map" href="{{map}}">🗺️</a>
-    {{#if pin}}<span>📌</span>{{/if}}
+    <span class="pin">
+      {{#if pin}}📌{{/if}}
+    </span>
+    <span class="stationName">{{name}}</span>
+    <a class="webLink" target="new" href="{{URL}}">🌐</a>
+    <a class="mapLink" href="{{map}}">🗺️</a>
+    
   </li>
   {{/this}}
 </script>
@@ -87,7 +92,7 @@
     var currentView = "Overview";
     var router = null;
 
-    var statusOrder = ['💚', '🟨', '🔴'];
+    var statusOrder = ['💚', '🔶', '🔴'];
 
     var stations = [];
     var fleet = [];
@@ -117,7 +122,7 @@
         map: "http://maps.apple.com/?ll=" + station.Y + "," + station.X,
         vessels: vessels,
         visited: stationVisits.length > 0,
-        status: stationVisits.length == 0 ? '🔴' : stationVisits.some((visit) => !visit.revisit) ? '💚' : '🟨',
+        status: stationVisits.length == 0 ? '🔴' : stationVisits.some((visit) => !visit.revisit) ? '💚' : '🔶',
         pin: stationVisits.some((visit) => visit.pin),
         visits: stationVisits,
         latestVisit: stationVisits.length > 0 ? stationVisits[0] : null
@@ -135,6 +140,10 @@
           return classData.Class == vessel.Class;
         }
       })[0];
+
+      if (!classData) {
+        return null;
+      }
 
       return {
         id: vessel.Equipment_ID,
@@ -165,7 +174,9 @@
 
     function draw() {
 
+      $('#stats').html("");
       $('#stations').html("");
+      $('#stationList').html("");
 
       switch (currentView) {
         case "Overview":
@@ -195,7 +206,7 @@
             })
             .forEach((station) => {
               var element = $(Handlebars.templates["stationSummary"](station));
-              $('#stations').append(element);
+              $('#stationList').append(element);
             });
           break;
       }
@@ -223,15 +234,15 @@
         Handlebars.templates[id] = Handlebars.compile(source);
       });
 
-      $.getJSON("RNLI_Lifeboat_Station_Locations.json", function (data) {
+      $.getJSON("json/RNLI_Lifeboat_Station_Locations.json", function (data) {
         stations = data;
-        $.getJSON("station_visits.json", function (data) {
+        $.getJSON("json/station_visits.json", function (data) {
           visits = data;
-          $.getJSON("RNLI_Lifeboat_Fleet.json", function (data) {
+          $.getJSON("json/RNLI_Lifeboat_Fleet.json", function (data) {
             fleet = data;
-            $.getJSON("assignments.json", function (data) {
+            $.getJSON("json/assignments.json", function (data) {
               assignments = data;
-              $.getJSON("RNLI_Lifeboat_Classes.json", function (data) {
+              $.getJSON("json/RNLI_Lifeboat_Classes.json", function (data) {
                 classes = data;
                 route();
               });
@@ -252,10 +263,10 @@
 </head>
 
 <body>
-  Hello world
+  <div id="title">Mermouse Lifeboat Project</div>
   <div id="stats"></div>
-  <ul id="stations">
-  </ul>
+  <ul id="stations"></ul>
+  <ul id="stationList"></ul>
 </body>
 
 </html>

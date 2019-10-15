@@ -1,0 +1,52 @@
+#stationList {
+  font-size: 28px;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+#stationList li {
+  min-height: 2rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+  align-items: center;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-top-color: lightgrey;
+  border-top-style: solid;
+  border-width: 1px;
+}
+
+#stationList a {
+  text-decoration: none;
+}
+
+.stationName {
+  flex-grow: 999;
+  font-size: 22px;
+  padding-left: 2px;
+}
+
+.webLink {
+  padding-right: 0.2rem;
+}
+
+.pin {
+  width: 1.5em;
+  font-size: 0.5em;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #fafaff;
+}
+
+#title {
+  font-size: 28px;
+  background-color:#002663;
+  color: white;
+  border-left-color: #f28b00;
+  border-left-style: solid;
+  border-left-width: 5px;
+}
