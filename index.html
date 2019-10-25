@@ -44,7 +44,7 @@
       <a target="new" href="{{URL}}">RNLI Website</a>
       <ul>
         {{#each vessels}}
-          <li>{{lifeboatnumber}} {{name}} <a target="new" href={{classRNLIpage}}>{{class}}</a> <a target="new" href="https://www.marinetraffic.com/en/ais/details/ships/{{MMSI}}">Maritime Data</a></li>
+          <li>{{lifeboatNumber}} {{name}} <a target="new" href={{classRNLIpage}}>{{lifeboatClass}}</a> <a target="new" href="https://www.marinetraffic.com/en/ais/details/ships/{{MMSI}}">Maritime Data</a></li>
         {{/each}}
       </ul>
       </div>
@@ -54,18 +54,15 @@
         <img src="" width="200" height="150">
         <img src="" width="200" height="150">
       </div>
+
+      <p>{{#if summary}}{{summary}}{{/if}}</p>
       
       <div class="stationVisits">
-        {{#if latestVisit}}
-        <div>
-          {{latestVisit.date}}: {{latestVisit.summary}}
-        </div>
         <ul>
             {{#each visits}}
-              <li>{{date}}: {{summary}}</li>
+              <li>{{date}}: {{notes}}</li>
             {{/each}}
         </ul>
-        {{/if}}
       </div>
       
     </li>
@@ -76,9 +73,7 @@
   {{#this}}
   <li data-id="{{id}}">
     <span class="status">{{status}}</span>
-    <span class="pin">
-      {{#if pin}}📌{{/if}}
-    </span>
+    <span class="pin">{{pin}}</span>
     <span class="stationName">{{name}}</span>
     <a class="webLink" target="new" href="{{URL}}">🌐</a>
     <a class="mapLink" href="{{map}}">🗺️</a>
@@ -94,49 +89,70 @@
 
     var statusOrder = ['💚', '🔶', '🔴'];
 
-    var stations = [];
-    var fleet = [];
-    var visits = [];
-    var assignments = [];
-    var classes = [];
+    var pinBadges = {
+      "Unavailable": '❌',
+      "No": '❓',
+      "Yes": '⭕'
+    };
 
-    function makeStationViewModel(station) {
-      // Work out which vessels are assignmed to this station
-      var vessels = assignments
-        .filter((assignment) => assignment.SAP_ID == station.SAP_ID)
-        .map((assignment) => fleet.find((vessel) => vessel.Equipment_ID == assignment.Equipment_ID))
+    // Raw data from RNLI https://data-rnli.opendata.arcgis.com/
+    var lifeboatStationLocations = [];
+    var lifeboatFleet = [];
+
+    // Generated data
+    var lifeboatAssignments = [];
+    var lifeboatClasses = [];
+
+    // Data about stations (e.g. notes, visit information, etc)
+    var visitedStations = [];
+
+    // Custom sort function for sorting by date property
+    var sortByDate = (a, b) => {
+      if (a.date > b.date) { return 1; }
+      if (a.date < b.date) { return -1; }
+      return 0;
+    };
+
+    function makeStationViewModel(stationID) {
+
+      // Get information about this location
+      var stationLocation = lifeboatStationLocations.filter((i) => i.SAP_ID == stationID)[0];
+
+      // Get information about which vessels are assigned to this station
+      var vessels = lifeboatAssignments
+        .filter((assignment) => assignment.SAP_ID == stationID)
+        .map((assignment) => lifeboatFleet.filter((vessel) => vessel.Equipment_ID == assignment.Equipment_ID)[0])
         .map(makeVesselViewModel);
 
-      var stationVisits = visits
-        .filter((visit) => visit.StationID == station.SAP_ID).map(makeVisitViewModel)
-        .sort((a, b) => {
-          if (a.date > b.date) { return -1; }
-          if (a.date < b.date) { return 1; }
-          return 0;
-        });
+      // Get information about any visits we have made to this station
+      var visitInformation = visitedStations.some((i) => i.SAP_ID == stationID)
+        ? visitedStations.filter((i) => i.SAP_ID == stationID)[0]
+        : null;
+
+      var visits = visitInformation ? visitInformation.Visits.map(makeVisitViewModel).sort(sortByDate) : [];
 
       return {
-        id: station.SAP_ID,
-        name: station.Station,
-        URL: station.URL,
-        map: "http://maps.apple.com/?ll=" + station.Y + "," + station.X,
+        id: stationID,
+        name: stationLocation.Station,
+        URL: stationLocation.URL,
+        map: "http://maps.apple.com/?ll=" + stationLocation.Y + "," + stationLocation.X,
         vessels: vessels,
-        visited: stationVisits.length > 0,
-        status: stationVisits.length == 0 ? '🔴' : stationVisits.some((visit) => !visit.revisit) ? '💚' : '🔶',
-        pin: stationVisits.some((visit) => visit.pin),
-        visits: stationVisits,
-        latestVisit: stationVisits.length > 0 ? stationVisits[0] : null
+        summary: visitInformation ? visitInformation.Summary : null,
+        visited: visitInformation && visitInformation.Visits.length > 0,
+        status: visitInformation ? !visitInformation.Revisit ? '💚' : '🔶' : '🔴',
+        pin: visitInformation ? pinBadges[visitInformation.Pin] : '',
+        visits: visits,
+        lastVisit: visits.length > 0 ? visits[0] : null,
+        date: visits.length > 0 ? visits[0].date : "",
       };
     }
 
     function makeVesselViewModel(vessel) {
-      var classData = classes.filter((classData) => {
-        if (vessel.Class == "B-Class")
-        {
+      var classData = lifeboatClasses.filter((classData) => {
+        if (vessel.Class == "B-Class") {
           return classData.Class == vessel.Class && classData.Variant == vessel.Launch_Method
         }
-        else
-        {
+        else {
           return classData.Class == vessel.Class;
         }
       })[0];
@@ -148,16 +164,16 @@
       return {
         id: vessel.Equipment_ID,
         name: vessel.Equipment_Name
-              .replace(vessel.ON_Number, "")
-              .replace(vessel.Class, "")
-              .replace("ILB", "")
-              .replace("IRB", "")
-              .replace("ALB", "")
-              .replace("IRH", "")
-              .replace("A85", "")
-              .replace("A75", ""),
-        "class": classData.Name,
-        lifeboatnumber: vessel.Lifeboat_Number,
+          .replace(vessel.ON_Number, "")
+          .replace(vessel.Class, "")
+          .replace("ILB", "")
+          .replace("IRB", "")
+          .replace("ALB", "")
+          .replace("IRH", "")
+          .replace("A85", "")
+          .replace("A75", ""),
+        lifeboatClass: classData.Name,
+        lifeboatNumber: vessel.Lifeboat_Number,
         classRNLIpage: classData.RNLI_Web,
         MMSI: vessel.MMSI
       };
@@ -166,9 +182,7 @@
     function makeVisitViewModel(visit) {
       return {
         date: visit.Date,
-        pin: visit.Pin == "Yes" ? true : false,
-        revisit: visit.Revisit == "Yes" ? true : false,
-        summary: visit.Summary
+        notes: visit.Notes
       }
     }
 
@@ -179,21 +193,28 @@
       $('#stationList').html("");
 
       switch (currentView) {
+
+        // Main homepage view
         case "Overview":
-          stations
-            .filter((station) => visits.some((visit) => station.SAP_ID == visit.StationID))
+          visitedStations
+            .map((station) => makeStationViewModel(station.SAP_ID))
+            .sort(sortByDate)
+            .reverse()
             .forEach((station) => {
-              var element = $(Handlebars.templates["stationFull"](makeStationViewModel(station)));
+              var element = $(Handlebars.templates["stationFull"](station));
               $('#stations').append(element);
             });
           break;
+
+        // Private dashboard listing visit information for all stations
         case "AllStations":
-          var stationCount = stations.length;
-          var visitedCount = stations.filter((station) => visits.some((visit) => station.SAP_ID == visit.StationID)).length;
+          var stationCount = lifeboatStationLocations.length;
+          var visitedCount = visitedStations.filter((station) => station.Visits.length > 0).length;
 
           $('#stats').html("Visited: " + visitedCount + " (" + Math.round(100 * visitedCount / stationCount) + "%)");
-          stations
-            .map(makeStationViewModel)
+
+          lifeboatStationLocations
+            .map((station) => makeStationViewModel(station.SAP_ID))
             .sort((a, b) => { // sort alphabetically by name
               if (a.name < b.name) { return -1; }
               if (a.name > b.name) { return 1; }
@@ -235,15 +256,15 @@
       });
 
       $.getJSON("json/RNLI_Lifeboat_Station_Locations.json", function (data) {
-        stations = data;
-        $.getJSON("json/station_visits.json", function (data) {
-          visits = data;
+        lifeboatStationLocations = data;
+        $.getJSON("json/visited_stations.json", function (data) {
+          visitedStations = data;
           $.getJSON("json/RNLI_Lifeboat_Fleet.json", function (data) {
-            fleet = data;
-            $.getJSON("json/assignments.json", function (data) {
-              assignments = data;
-              $.getJSON("json/RNLI_Lifeboat_Classes.json", function (data) {
-                classes = data;
+            lifeboatFleet = data;
+            $.getJSON("json/Generated_Lifeboat_Assignments.json", function (data) {
+              lifeboatAssignments = data;
+              $.getJSON("json/Generated_Lifeboat_Classes.json", function (data) {
+                lifeboatClasses = data;
                 route();
               });
             });
