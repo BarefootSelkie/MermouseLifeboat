@@ -1,30 +1,40 @@
 {{#this}}
-<li data-id="{{id}}">
+<li data-id="{{id}}" class="stationListing" id="{{name}}">
 
   <div class="stationTitle">
-    <span>{{name}}</span>
+    <span class="stationName">{{name}}</span>
     <span><i class="icon ion-ios-information-circle-outline"></i></span>
   </div>
 
   <div class="stationExtendedInfo">
-    <a target="new" href="{{URL}}">RNLI Website</a>
-    <ul>
+    
+    <a target="new" href="{{URL}}" class="linkRNLIStation" title="RNLI Website for {{name}}">
+      <img src="images/RNLI_Flag.jpg" width="48" height="36" alt="The RNLI Flag">
+      Station
+    </a>
+    
+    <ul class="stationVessels">
       {{#each vessels}}
-      <li>{{lifeboatNumber}} {{name}} <a target="new" href={{classRNLIpage}}>{{lifeboatClass}}</a> <a target="new"
-          href="https://www.marinetraffic.com/en/ais/details/ships/{{MMSI}}">Maritime Data</a></li>
+      <li>
+        <span class="lifeboatNumber">{{lifeboatNumber}}</span>
+        <span class="lifeboatName">{{name}}</span>
+        <a class="lifeboatClass" target="new" href={{classRNLIpage}}>{{lifeboatClass}}</a>
+        <a class="lifeboatData" target="new" href="https://www.marinetraffic.com/en/ais/details/ships/{{MMSI}}" title="Maritime data for {{name}}" class="emojiLink">📍</a>
+      </li>
       {{/each}}
     </ul>
+  
   </div>
 
   <div class="stationPhotos">
     <img class="mainPhoto" src="" width="240" height="180">
-    <span>
+    <span class="stationPhotosSide">
       <img class="upperPhoto" src="" width="120" height="90">
       <img class="lowerPhoto" src="" width="120" height="90">
     </span>
   </div>
 
-  <p>{{#if summary}}{{summary}}{{/if}}</p>
+  <p class="visitSummary">{{#if summary}}{{summary}}{{/if}}</p>
 
   <div class="stationVisits">
     <ul>

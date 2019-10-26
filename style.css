@@ -5,6 +5,50 @@
   padding: 0;
 }
 
+#stations {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stationVessels {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stationVessels li {
+  display: flex;
+  flex-direction: row;
+  margin-right: 0.5rem;
+}
+
+.stationVisits ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+
+.linkRNLIStation {
+  display: flex;
+  flex-direction: column;
+  font-size: 80%;
+  align-items: center;
+  min-width: 52px;
+  flex-shrink: 999;
+}
+
+.stationExtendedInfo {
+  display: flex;
+  align-items: center;
+}
+
+.stationTitle {
+  display: flex;
+  font-size: 28px;
+}
+
 #stationList li {
   min-height: 2rem;
   display: flex;
@@ -18,7 +62,15 @@
   border-width: 1px;
 }
 
-#stationList a {
+.stationListing {
+  border-bottom-color: #002663;
+  border-bottom-width: 4px;
+  border-bottom-style: solid;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.emojiLink {
   text-decoration: none;
 }
 
@@ -49,4 +101,13 @@ body {
   border-left-color: #f28b00;
   border-left-style: solid;
   border-left-width: 5px;
+}
+
+.stationPhotos {
+  display: flex;
+  flex-direction: row;
+}
+.stationPhotosSide {
+  display: flex;
+  flex-direction: column;
 }
