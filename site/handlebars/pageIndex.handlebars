@@ -1,0 +1,9 @@
+{{! This is the template for the front page of the site}}
+
+<ul id="indexStationsList">
+  {{#each visitedStations}}
+    {{> itemStationSummary}}
+  {{/each}}
+</ul>
+
+{{> paginator}}

@@ -17,7 +17,7 @@
 
   <script>
 
-    var currentView = "Overview";
+    var currentView = "index";
     var router = null;
 
     var statusOrder = ['💚', '🔶', '🔴'];
@@ -28,57 +28,28 @@
       "Yes": '⭕'
     };
 
-    // Custom sort function for sorting by date property
-    var sortByDate = (a, b) => {
-      if (a.date > b.date) { return 1; }
-      if (a.date < b.date) { return -1; }
-      return 0;
-    };
-
     // Draw the current view on the page
     function draw() {
 
-      $('#stats').html("");
-      $('#stations').html("");
-      $('#stationList').html("");
+      $('main').html("");
+
+      var stationCount = lifeboatStationLocations.length;
 
       switch (currentView) {
 
         // Main homepage view
-        case "Overview":
-          visitedStations
-            .map((station) => makeStationViewModel(station.SAP_ID))
-            .sort(sortByDate)
-            .reverse()
-            .forEach((station) => {
-              var element = $(Handlebars.templates["stationFull"](station));
-              $('#stations').append(element);
-            });
+        case "index":
+          $('main').html(Handlebars.templates["pageIndex"](makeSiteViewModel()));
           break;
 
         // Private dashboard listing visit information for all stations
-        case "AllStations":
-          var stationCount = lifeboatStationLocations.length;
-          var visitedCount = visitedStations.filter((station) => station.Visits.length > 0).length;
+        case "overview":
+          $('main').html(Handlebars.templates["pageOverview"](makeSiteViewModel()));
+          break;
 
-          $('#stats').html("Visited: " + visitedCount + " (" + Math.round(100 * visitedCount / stationCount) + "%)");
-
-          lifeboatStationLocations
-            .map((station) => makeStationViewModel(station.SAP_ID))
-            .sort((a, b) => { // sort alphabetically by name
-              if (a.name < b.name) { return -1; }
-              if (a.name > b.name) { return 1; }
-              return 0;
-            })
-            .sort((a, b) => { // sort by visited stations first
-              if (statusOrder.indexOf(a.status) < statusOrder.indexOf(b.status)) { return -1; }
-              if (statusOrder.indexOf(a.status) > statusOrder.indexOf(b.status)) { return 1; }
-              return 0;
-            })
-            .forEach((station) => {
-              var element = $(Handlebars.templates["stationSummary"](station));
-              $('#stationList').append(element);
-            });
+        case "stats":
+          // TODO
+          $('main').html("Nothing to see here!");
           break;
       }
     }
@@ -91,9 +62,10 @@
       .then(() => {
         // Set up routing (going to the correct view when the URL is changed)
         router = Router({
-          '/': () => { currentView = "Overview"; draw(); },
-          '/allstations': () => { currentView = "AllStations"; draw(); },
-          '/:stationid': (id) => { selectedStation = id; currentView = "Station"; draw(); }
+          '/': () => { currentView = "index"; page = 0; draw(); },
+          '/:pageNumber': (pageNumber) => { currentView = "index"; page = parseInt(pageNumber); draw(); },
+          '/overview': () => { currentView = "overview"; draw(); },
+          '/stats': () => { currentView = "stats"; draw(); },
         });
         router.init();
 
@@ -106,10 +78,15 @@
 </head>
 
 <body>
-  <div id="title">Mermouse Lifeboat Project</div>
-  <div id="stats"></div>
-  <ul id="stations"></ul>
-  <ul id="stationList"></ul>
+  <header>
+    <div id="title">Mermouse Lifeboat Project</div>
+    <nav id="siteNav">Menu goes here!</nav>
+  </header>
+  <main>
+  </main>
+  <footer>
+    <nav>Footer nav</nav>
+  </footer>
 </body>
 
 </html>
