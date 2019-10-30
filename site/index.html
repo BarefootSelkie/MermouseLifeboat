@@ -63,9 +63,10 @@
         // Set up routing (going to the correct view when the URL is changed)
         router = Router({
           '/': () => { currentView = "index"; page = 0; draw(); },
-          '/:pageNumber': (pageNumber) => { currentView = "index"; page = parseInt(pageNumber); draw(); },
           '/overview': () => { currentView = "overview"; draw(); },
           '/stats': () => { currentView = "stats"; draw(); },
+          '/station/:sap_id': () => { currentView = "stats"; draw(); },
+          '/:pageNumber': (pageNumber) => { currentView = "index"; page = parseInt(pageNumber); draw(); }
         });
         router.init();
 
